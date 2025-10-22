@@ -643,13 +643,13 @@ var _Sources = (() => {
       "use strict";
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.HomeSectionType = void 0;
-      var HomeSectionType2;
-      (function(HomeSectionType3) {
-        HomeSectionType3["singleRowNormal"] = "singleRowNormal";
-        HomeSectionType3["singleRowLarge"] = "singleRowLarge";
-        HomeSectionType3["doubleRow"] = "doubleRow";
-        HomeSectionType3["featured"] = "featured";
-      })(HomeSectionType2 = exports.HomeSectionType || (exports.HomeSectionType = {}));
+      var HomeSectionType3;
+      (function(HomeSectionType4) {
+        HomeSectionType4["singleRowNormal"] = "singleRowNormal";
+        HomeSectionType4["singleRowLarge"] = "singleRowLarge";
+        HomeSectionType4["doubleRow"] = "doubleRow";
+        HomeSectionType4["featured"] = "featured";
+      })(HomeSectionType3 = exports.HomeSectionType || (exports.HomeSectionType = {}));
     }
   });
 
@@ -1459,16 +1459,13 @@ var _Sources = (() => {
     }
   });
 
-  // src/KnightNoScanlation/KnightNoScanlation.ts
-  var KnightNoScanlation_exports = {};
-  __export(KnightNoScanlation_exports, {
-    KnightNoScanlation: () => KnightNoScanlation,
-    KnightNoScanlationInfo: () => KnightNoScanlationInfo
+  // src/SamuraiScan/SamuraiScan.ts
+  var SamuraiScan_exports = {};
+  __export(SamuraiScan_exports, {
+    SamuraiScan: () => SamuraiScan,
+    SamuraiScanInfo: () => SamuraiScanInfo
   });
   var import_types3 = __toESM(require_lib());
-
-  // src/Madara.ts
-  var import_types2 = __toESM(require_lib());
 
   // node_modules/cheerio/dist/browser/static.js
   var static_exports = {};
@@ -16059,6 +16056,9 @@ var _Sources = (() => {
   var parse5 = getParse((content, options, isDocument2, context) => options._useHtmlParser2 ? parseDocument(content, options) : parseWithParse5(content, options, isDocument2, context));
   var load = getLoad(parse5, (dom, options) => options._useHtmlParser2 ? esm_default(dom, options) : renderWithParse5(dom));
 
+  // src/Madara.ts
+  var import_types2 = __toESM(require_lib());
+
   // node_modules/html-entities/dist/esm/named-references.js
   var __assign = function() {
     __assign = Object.assign || function(t) {
@@ -17028,27 +17028,13 @@ Please go to the homepage of <${this.baseUrl}> and press the cloud icon.`);
     }
   };
 
-  // src/KnightNoScanlation/KnightNoScanlationParser.ts
-  var KnightNoScanlationParser = class extends Parser3 {
+  // src/SamuraiScan/SamuraiScanParser.ts
+  var SamuraiScanParser = class extends Parser3 {
     async parseMangaDetails($2, mangaId, source) {
+      const title = decode($2("div.post-title h1, div#manga-title h1").children().remove().end().text().trim());
+      const description = decode($2("div.manga-excerpt").first().text()).replace("Show more", "").trim();
       const image = encodeURI(await this.getImageSrc($2("div.summary_image img").first(), source));
-      const titles = [];
-      titles.push(decode($2("div.post-title h1, div#manga-title h1").children().remove().end().text().trim()));
-      let parsedStatus = "";
-      let description = "";
-      for (const obj of $2("div.post-content_item").toArray()) {
-        switch (decode($2("h5", obj).first().text()).trim().toUpperCase()) {
-          case "ALTERNATIVE":
-            titles.push(decode($2("div.summary-content", obj).text().trim()));
-            break;
-          case "STATUS":
-            parsedStatus = $2("div.summary-content", obj).text().trim();
-            break;
-          case "SUMMARY":
-            description = decode($2("p", obj).text().trim());
-            break;
-        }
-      }
+      const parsedStatus = $2("div.summary-content", $2("div.post-content_item").last()).text().trim();
       let status;
       switch (parsedStatus.toUpperCase()) {
         case "COMPLETED":
@@ -17069,7 +17055,7 @@ Please go to the homepage of <${this.baseUrl}> and press the cloud icon.`);
       return App.createSourceManga({
         id: mangaId,
         mangaInfo: App.createMangaInfo({
-          titles,
+          titles: [title],
           image,
           tags: tagSections,
           desc: description,
@@ -17079,16 +17065,16 @@ Please go to the homepage of <${this.baseUrl}> and press the cloud icon.`);
     }
   };
 
-  // src/KnightNoScanlation/KnightNoScanlation.ts
-  var DOMAIN = "https://lectorknight.com";
-  var KnightNoScanlationInfo = {
-    version: getExportVersion("0.0.4"),
-    name: "KnightNoScanlation",
+  // src/SamuraiScan/SamuraiScan.ts
+  var DOMAIN = "https://lectorknight.com/";
+  var SamuraiScanInfo = {
+    version: getExportVersion("0.0.3"),
+    name: "SamuraiScan",
     description: `Extension that pulls manga from ${DOMAIN}`,
     author: "Netsky & Seitenca",
     authorWebsite: "http://github.com/TheNetsky",
     icon: "icon.png",
-    contentRating: import_types3.ContentRating.MATURE,
+    contentRating: import_types3.ContentRating.ADULT,
     websiteBaseURL: DOMAIN,
     sourceTags: [
       {
@@ -17098,15 +17084,59 @@ Please go to the homepage of <${this.baseUrl}> and press the cloud icon.`);
     ],
     intents: import_types3.SourceIntents.MANGA_CHAPTERS | import_types3.SourceIntents.HOMEPAGE_SECTIONS | import_types3.SourceIntents.CLOUDFLARE_BYPASS_REQUIRED | import_types3.SourceIntents.SETTINGS_UI
   };
-  var KnightNoScanlation = class extends Madara {
+  var SamuraiScan = class extends Madara {
     constructor() {
       super(...arguments);
       this.baseUrl = DOMAIN;
       this.language = "\u{1F1EA}\u{1F1F8}";
       this.chapterEndpoint = 1;
-      this.parser = new KnightNoScanlationParser();
+      this.parser = new SamuraiScanParser();
+    }
+    async getHomePageSections(sectionCallback) {
+      const sections = [
+        {
+          request: this.constructAjaxHomepageRequest(0, 10, "_wp_manga_week_views_value"),
+          section: App.createHomeSection({
+            id: "0",
+            title: "Currently Trending",
+            type: import_types3.HomeSectionType.featured,
+            containsMoreItems: true
+          })
+        },
+        {
+          request: this.constructAjaxHomepageRequest(0, 10, "_latest_update"),
+          section: App.createHomeSection({
+            id: "1",
+            title: "Recently Updated",
+            type: import_types3.HomeSectionType.singleRowNormal,
+            containsMoreItems: true
+          })
+        },
+        {
+          request: this.constructAjaxHomepageRequest(0, 10, "_wp_manga_views"),
+          section: App.createHomeSection({
+            id: "2",
+            title: "Most Popular",
+            type: import_types3.HomeSectionType.singleRowNormal,
+            containsMoreItems: true
+          })
+        }
+      ];
+      const promises = [];
+      for (const section of sections) {
+        sectionCallback(section.section);
+        promises.push(
+          this.requestManager.schedule(section.request, 1).then(async (response) => {
+            this.checkResponseError(response);
+            const $2 = load(response.data);
+            section.section.items = await this.parser.parseHomeSection($2, this);
+            sectionCallback(section.section);
+          })
+        );
+      }
+      await Promise.all(promises);
     }
   };
-  return __toCommonJS(KnightNoScanlation_exports);
+  return __toCommonJS(SamuraiScan_exports);
 })();
 this.Sources = _Sources; if (typeof exports === 'object' && typeof module !== 'undefined') {module.exports.Sources = this.Sources;}
