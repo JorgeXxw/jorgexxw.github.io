@@ -23158,54 +23158,122 @@ Please go to the homepage of <${this.baseUrl}> and press the cloud icon.`);
 
   // ... (El resto del código base de MangaStream y sus dependencias permanece igual) ...
 
-  // Define la información específica de LectorKnight
-  var DOMAIN = "https://lectorknight.com/";
-  var LectorKnightInfo = {
-    // <--- Cambiado
-    version: getExportVersion("0.0.2"), // Puedes ajustar la versión si es necesario
-    name: "LectorKnight", // <--- Cambiado
-    description: `Extensión que extrae manga de ${DOMAIN}`, // <--- Cambiado
-    author: "Netsky", // Puedes cambiar esto si quieres
-    authorWebsite: "http://github.com/TheNetsky", // Puedes cambiar esto si quieres
-    icon: "icon.png",
-    contentRating: import_types4.ContentRating.MATURE, // Ajusta si es necesario (EVERYONE, MATURE, ADULT)
+  var LectorKnight_exports = {}; // Exportaciones específicas renombradas
+  __export(LectorKnight_exports, {
+    LectorKnight: () => LectorKnight,
+    LectorKnightInfo: () => LectorKnightInfo,
+  });
+  var import_types4 = __toESM(require_lib()); // Importar tipos necesarios
+
+  // --- Información de la Fuente LectorKnight ---
+  const DOMAIN = "https://lectorknight.com/"; // URL base
+  const LectorKnightInfo = {
+    version: getExportVersion("0.0.1"), // Usa la función de versionado de MangaStream
+    name: "LectorKnight",
+    description: `Extensión que extrae manga de ${DOMAIN}`,
+    author: "TuNombre", // Cambia esto
+    authorWebsite: "TuWebsite (opcional)", // Cambia o elimina
+    icon: "icon.png", // Asegúrate que 'includes/icon.png' exista
+    contentRating: import_types4.ContentRating.MATURE, // Ajusta si es necesario
     websiteBaseURL: DOMAIN,
     intents:
       import_types4.SourceIntents.MANGA_CHAPTERS |
       import_types4.SourceIntents.HOMEPAGE_SECTIONS |
       import_types4.SourceIntents.CLOUDFLARE_BYPASS_REQUIRED |
-      import_types4.SourceIntents.SETTINGS_UI,
-    sourceTags: [], // Puedes añadir etiquetas si son relevantes (eg. { text: "Spanish", type: "language" })
+      import_types4.SourceIntents.SETTINGS_UI |
+      import_types4.SourceIntents.TAG_SEARCH, // Añadido para getSearchTags si lo implementas
+    sourceTags: [
+      { text: "Spanish", type: "language" }, // Etiqueta de idioma
+      // { text: "Manhwa", type: "content" } // Ejemplo de otra etiqueta
+    ],
   };
 
-  // Define la clase LectorKnight extendiendo MangaStream
-  var LectorKnight = class extends MangaStream {
-    // <--- Cambiado
-    constructor() {
-      super(...arguments);
-      this.baseUrl = DOMAIN;
-      this.directoryPath = "series"; // Verificado, parece correcto para lectorknight.com
-      // Ajusta los selectores si son diferentes a los predeterminados de MangaStream
-      // this.manga_selector_AlternativeTitles = "Otros títulos"; // Ejemplo si fuera diferente
-      // this.manga_selector_author = "Autor"; // Ejemplo si fuera diferente
-      // ... otros selectores si es necesario ...
-
-      // Ajusta los meses si el sitio está en otro idioma
-      // this.dateMonths = { ... };
-
-      // Ajusta las secciones de la pantalla de inicio si son diferentes
-      // this.homescreen_sections = { ... };
+  class LectorKnight extends MangaStream {
+    constructor(cheerio) {
+      // Añadido el parámetro cheerio que espera el constructor base
+      super(cheerio); // Llama al constructor de MangaStream
     }
 
-    // Puedes sobrescribir métodos específicos si LectorKnight se comporta diferente
-    // Ejemplo:
-    // configureSections() {
-    //   this.homescreen_sections["new_titles"].enabled = false; // Mantenido del código original
-    // }
-  };
+    // --- Configuraciones Específicas ---
+    baseUrl = DOMAIN;
+    language = "es"; // Código de idioma español
+    directoryPath = "series"; // Ruta para los mangas/series
 
-  // Exporta la clase e información
-  return __toCommonJS(LectorKnight_exports); // <--- Cambiado
+    // Ajustes de selectores y textos (si difieren del estándar MangaStream)
+    manga_selector_author = "Autor(es)"; // Revisa si este es el texto exacto en la web
+    manga_selector_artist = "Artista(s)"; // Revisa si este es el texto exacto en la web
+    manga_selector_status = "Estado"; // Revisa si este es el texto exacto en la web
+    manga_selector_AlternativeTitles = "Otros nombres"; // Revisa si este es el texto exacto
+
+    manga_StatusTypes = {
+      ONGOING: "Publicándose", // Revisa el texto exacto para "En curso"
+      COMPLETED: "Finalizado", // Revisa el texto exacto para "Completo"
+    };
+
+    dateMonths = {
+      enero: "Enero",
+      febrero: "Febrero",
+      marzo: "Marzo",
+      abril: "Abril",
+      mayo: "Mayo",
+      junio: "Junio",
+      julio: "Julio",
+      agosto: "Agosto",
+      septiembre: "Septiembre",
+      octubre: "Octubre",
+      noviembre: "Noviembre",
+      diciembre: "Diciembre",
+      // Posibles fallbacks si usa mezcla de idiomas o abreviaturas
+      jan: "Ene", // Ejemplo
+      january: "Enero",
+      // ... (añade otros si es necesario)
+    };
+
+    // (Opcional) Configuración de las secciones de inicio
+    configureSections() {
+      // Usaremos las secciones por defecto de MangaStream, excepto "New Titles"
+      if (this.homescreen_sections["new_titles"]) {
+        this.homescreen_sections["new_titles"].enabled = false;
+      }
+      // Podrías ajustar títulos o selectores aquí si fuera necesario
+      // Ejemplo:
+      // if (this.homescreen_sections["latest_update"]) {
+      //     this.homescreen_sections["latest_update"].section.title = "Últimos Capítulos";
+      // }
+    }
+
+    // (Opcional) Sobrescribir `getSearchTags` si quieres implementar filtros
+    // async getSearchTags(): Promise<import_types4.TagSection[]> {
+    //     // Lógica para obtener etiquetas de la página de búsqueda/directorio
+    //     // ... pide la página, usa this.parser.parseTags($) ...
+    //     // Ejemplo simple (necesitarás adaptarlo):
+    //     const request = App.createRequest({ url: `${this.baseUrl}/${this.directoryPath}/`, method: 'GET' });
+    //     const response = await this.requestManager.schedule(request, 1);
+    //     this.checkResponseError(response);
+    //     const $ = this.cheerio.load(response.data);
+    //     return this.parser.parseTags($); // Asume que el parser base funciona
+    // }
+
+    // (Opcional) Ajustar cómo se construye la petición de búsqueda si es necesario
+    // override async constructSearchRequest(page: number, query?: SearchQuery): Promise<Request> {
+    //     // ... Lógica específica para LectorKnight si difiere ...
+    //     // Por ejemplo, si los parámetros de género se llaman diferente
+    //     return super.constructSearchRequest(page, query); // O llama a la base
+    // }
+
+    // (Opcional) Habilitar si el sitio permite excluir géneros en la búsqueda (normalmente no)
+    // override async supportsTagExclusion(): Promise<boolean> {
+    //     return true;
+    // }
+
+    // --- Puedes sobrescribir otros métodos de MangaStream si es necesario ---
+    // ej: getMangaDetails, getChapters, getChapterDetails, getViewMoreItems
+  }
+
+  // ====================================================================================================
+  // == EXPORTACIÓN FINAL ==============================================================================
+  // ====================================================================================================
+  return __toCommonJS(LectorKnight_exports); // Exporta la fuente LectorKnight
 })();
 this.Sources = _Sources;
 if (typeof exports === "object" && typeof module !== "undefined") {
